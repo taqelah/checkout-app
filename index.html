@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload a receipt</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 64px auto; padding: 0 16px; }
+    .error { color: #b42318; }
+    .ok { color: #1a7f37; }
+  </style>
+</head>
+<body>
+  <h1>Upload a receipt</h1>
+  <p>Files up to {{MAX_UPLOAD_MB}} MB.</p>
+  <label for="file">Choose a file</label>
+  <input id="file" type="file">
+  <p id="status" role="status"></p>
+  <script>
+    const MAX_MB = {{MAX_UPLOAD_MB}};
+    document.getElementById('file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const status = document.getElementById('status');
+      if (!file) return;
+      if (file.size > MAX_MB * 1024 * 1024) {
+        status.className = 'error';
+        status.textContent = `File exceeds ${MAX_MB} MB`;
+      } else {
+        status.className = 'ok';
+        status.textContent = 'Upload complete';
+      }
+    });
+  </script>
+</body>
+</html>

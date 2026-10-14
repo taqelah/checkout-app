@@ -1,0 +1,18 @@
+// Each test name starts with the acceptance criterion it proves and the version of that criterion
+// it was written for. Threadline maps results by this key; a pass tagged with an older version than
+// the criterion counts as stale.
+const {test, expect} = require('@playwright/test');
+
+const mb = (n) => ({name: `receipt-${n}mb.pdf`, mimeType: 'application/pdf', buffer: Buffer.alloc(n * 1024 * 1024)});
+
+test('AC-7-1@v1 rejects a 30 MB file', async ({page}) => {
+  await page.goto('/');
+  await page.getByLabel('Choose a file').setInputFiles(mb(30));
+  await expect(page.getByRole('status')).toHaveText('File exceeds 25 MB');
+});
+
+test('AC-7-2@v1 accepts a 20 MB file', async ({page}) => {
+  await page.goto('/');
+  await page.getByLabel('Choose a file').setInputFiles(mb(20));
+  await expect(page.getByRole('status')).toHaveText('Upload complete');
+});

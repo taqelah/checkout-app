@@ -1,0 +1,12 @@
+{
+  "name": "checkout-app",
+  "private": true,
+  "description": "Demo product for Threadline: an upload page whose tests are named after acceptance criteria.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
