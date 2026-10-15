@@ -17,11 +17,11 @@ jobs:
       - name: Run the acceptance tests
         run: npm test
         continue-on-error: true
-      - name: Send results to Threadline
+      - name: Send results to Spec Keeper
         if: always()
         env:
-          THREADLINE_URL: ${{ secrets.THREADLINE_URL }}
-          THREADLINE_SECRET: ${{ secrets.THREADLINE_SECRET }}
+          SPECKEEPER_URL: ${{ secrets.SPECKEEPER_URL }}
+          SPECKEEPER_SECRET: ${{ secrets.SPECKEEPER_SECRET }}
           SLACK_CHANNEL: ${{ vars.SLACK_CHANNEL }}
           RUN_ID: "#${{ github.run_number }} on ${{ github.ref_name }} (${{ github.sha }})"
         run: |
@@ -30,7 +30,7 @@ jobs:
             const body = {run_id: process.env.RUN_ID, channel: process.env.SLACK_CHANNEL, junit_xml: fs.readFileSync("results/junit.xml", "utf8")};
             fs.writeFileSync("payload.json", JSON.stringify(body));
           '
-          curl -sS --fail -X POST "$THREADLINE_URL/ci" \
+          curl -sS --fail -X POST "$SPECKEEPER_URL/ci" \
             -H "Content-Type: application/json" \
-            -H "X-Threadline-Secret: $THREADLINE_SECRET" \
+            -H "X-SpecKeeper-Secret: $SPECKEEPER_SECRET" \
             --data @payload.json

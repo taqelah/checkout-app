@@ -1,7 +1,7 @@
 {
   "name": "checkout-app",
   "private": true,
-  "description": "Demo product for Threadline: an upload page whose tests are named after acceptance criteria.",
+  "description": "Demo product for Spec Keeper: an upload page whose tests are named after acceptance criteria.",
   "scripts": {
     "start": "node server.js",
     "test": "playwright test"

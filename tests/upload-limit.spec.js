@@ -1,6 +1,6 @@
 // Each test name starts with the acceptance criterion it proves and the version of that criterion
 // it was written for. The criteria are REQ-7's, as approved from the Checkout v2 kickoff (issue #1).
-// Threadline maps results by this key; a pass tagged with an older version than the criterion
+// Spec Keeper maps results by this key; a pass tagged with an older version than the criterion
 // counts as stale.
 const {test, expect} = require('@playwright/test');
 
@@ -17,7 +17,7 @@ test('AC-7-2@v1 shows "File exceeds 25 MB" for a larger file before uploading', 
   await expect(page.getByRole('status')).toHaveText('File exceeds 25 MB');
 });
 
-// Not an approved criterion: kept as a plain regression check, reported to Threadline as unmapped.
+// Not an approved criterion: kept as a plain regression check, reported to Spec Keeper as unmapped.
 test('accepts a 20 MB file', async ({page}) => {
   await page.goto('/');
   await page.getByLabel('Choose a file').setInputFiles(mb(20));
