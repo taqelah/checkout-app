@@ -48,8 +48,8 @@ jobs:
           SPECKEEPER_URL: ${{ secrets.SPECKEEPER_URL }}
           SPECKEEPER_SECRET: ${{ secrets.SPECKEEPER_SECRET }}
           SLACK_CHANNEL: ${{ vars.SLACK_CHANNEL }}
-          RUN_ID: "#${{ github.run_number }} on ${{ github.ref_name }} (${{ github.sha }})"
         run: |
+          export RUN_ID="#$GITHUB_RUN_NUMBER on $GITHUB_REF_NAME (${GITHUB_SHA::7})"  # short commit id, as GitHub shows it
           node -e '
             const fs = require("fs");
             const body = {run_id: process.env.RUN_ID, channel: process.env.SLACK_CHANNEL, junit_xml: fs.readFileSync("results/junit.xml", "utf8")};
