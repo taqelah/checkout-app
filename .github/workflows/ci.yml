@@ -31,6 +31,7 @@ jobs:
     # The test report, with a video of each test, goes to GitHub Pages; Slack links to it.
     permissions:
       contents: read
+      pull-requests: read  # to find the PR a merge came from, for the link in Slack
       pages: write
       id-token: write
     environment:
@@ -70,11 +71,19 @@ jobs:
           SPECKEEPER_SECRET: ${{ secrets.SPECKEEPER_SECRET }}
           SLACK_CHANNEL: ${{ vars.SLACK_CHANNEL }}
           REPORT_URL: ${{ steps.pages.outputs.page_url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           export RUN_ID="#$GITHUB_RUN_NUMBER on $GITHUB_REF_NAME (${GITHUB_SHA::7})"  # short commit id, as GitHub shows it
+          # On a push (a merge), the PR it came from. A run started by an approval tests the same code but
+          # wasn't caused by that PR, so it gets no PR link.
+          export PR_URL=""
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            PR_URL="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].html_url // ""' 2>/dev/null || true)"
+          fi
           node -e '
             const fs = require("fs");
-            const body = {run_id: process.env.RUN_ID, channel: process.env.SLACK_CHANNEL, junit_xml: fs.readFileSync("results/junit.xml", "utf8"), report_url: process.env.REPORT_URL || ""};
+            const body = {run_id: process.env.RUN_ID, channel: process.env.SLACK_CHANNEL, junit_xml: fs.readFileSync("results/junit.xml", "utf8"), report_url: process.env.REPORT_URL || "", run_url: process.env.RUN_URL || "", pr_url: process.env.PR_URL || ""};
             fs.writeFileSync("payload.json", JSON.stringify(body));
           '
           curl -sS --fail -X POST "$SPECKEEPER_URL/ci" \
