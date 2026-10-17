@@ -3,12 +3,31 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Spec Keeper's own GitHub activity, so results follow an approval in Slack with nobody starting a run:
+  # requirement issues opened (Approve all) and "Changed to v2 …" comments (a change approved).
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
 
 jobs:
   test:
+    # Only Spec Keeper's account (the token it files issues with) starts runs from issues and comments, and
+    # only for requirement issues and change comments; its CI-result comments don't.
+    if: >-
+      github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.issue.user.login == 'syamsasi99' &&
+        contains(github.event.issue.labels.*.name, 'requirement')) ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login == 'syamsasi99' &&
+        startsWith(github.event.comment.body, 'Changed to v'))
+    # Approve all opens several issues at once: one run for the burst, the latest. On the job, not the
+    # workflow, so a skipped run (another comment) can't cancel one in progress.
+    concurrency:
+      group: acceptance-tests
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       # Actions are pinned to commit hashes: a moved tag can't change what runs here.
@@ -24,7 +43,7 @@ jobs:
         run: npm test
         continue-on-error: true
       - name: Send results to Spec Keeper
-        if: always()
+        if: ${{ !cancelled() }}  # failed tests are still results; a run replaced by a newer one isn't
         env:
           SPECKEEPER_URL: ${{ secrets.SPECKEEPER_URL }}
           SPECKEEPER_SECRET: ${{ secrets.SPECKEEPER_SECRET }}
