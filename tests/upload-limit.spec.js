@@ -20,6 +20,13 @@ test.beforeEach(async ({page}, testInfo) => {
   }, testInfo.title);
 });
 
+// The app is behind a demo login: sign in the way a person would, with the demo button.
+test.beforeEach(async ({page}) => {
+  await page.goto('/');
+  await page.getByRole('button', {name: 'Continue as Maya (demo)'}).click();
+  await expect(page.getByRole('heading', {name: 'New expense'})).toBeVisible();
+});
+
 test.afterEach(async ({page}, testInfo) => {
   const passed = testInfo.status === testInfo.expectedStatus;
   await page.evaluate(([text, color]) => window.__caption?.(text, color), [`${passed ? '✓ passed' : '✗ failed'} · ${testInfo.title}`, passed ? '#1a7f37' : '#b42318']).catch(() => {});
