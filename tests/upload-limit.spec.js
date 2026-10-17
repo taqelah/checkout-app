@@ -1,5 +1,5 @@
 // Each test name starts with the acceptance criterion it proves and the version of that criterion
-// it was written for. The criteria are REQ-7's, as approved from the Checkout v2 kickoff (issue #1).
+// it was written for. The criteria are REQ-7's, as written in "Checkout · Current product".
 // Spec Keeper maps results by this key; a pass tagged with an older version than the criterion
 // counts as stale.
 const {test, expect} = require('@playwright/test');
