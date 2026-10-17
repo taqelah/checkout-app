@@ -10,8 +10,8 @@ module.exports = defineConfig({
   // The window and the video are the same size, so the page is recorded 1:1, not shrunk.
   use: {
     baseURL: 'http://localhost:3000',
-    viewport: {width: 800, height: 450},
-    video: {mode: 'on', size: {width: 800, height: 450}},
+    viewport: {width: 1280, height: 720},
+    video: {mode: 'on', size: {width: 1280, height: 720}},
     launchOptions: {slowMo: 400},
   },
   webServer: {command: 'node server.js', url: 'http://localhost:3000', reuseExistingServer: !process.env.CI},

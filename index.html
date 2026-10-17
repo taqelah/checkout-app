@@ -3,32 +3,193 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Upload a receipt</title>
+  <title>New expense · Checkout</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 64px auto; padding: 0 16px; }
-    .error { color: #b42318; }
-    .ok { color: #1a7f37; }
+    :root {
+      --bg: #f6f7f9; --panel: #ffffff; --text: #101828; --muted: #667085; --line: #e4e7ec; --hover: #f2f4f7;
+      --brand: #4f46e5; --brand-soft: #eef2ff; --focus: #a5b4fc;
+      --ok: #067647; --ok-soft: #ecfdf3; --err: #b42318; --err-soft: #fef3f2; --warn-soft: #fffaeb; --warn: #b54708;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0c111d; --panel: #161b26; --text: #f5f5f6; --muted: #94969c; --line: #2b303b; --hover: #1f242f;
+              --brand-soft: #1f1d3d; --focus: #6366f1; --ok: #47cd89; --ok-soft: #053321; --err: #f97066; --err-soft: #3e1c1a; --warn-soft: #2d1f0a; --warn: #fdb022; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+    /* sidebar */
+    nav { background: var(--panel); border-right: 1px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 2px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; padding: 4px 10px 18px; }
+    .mark { width: 28px; height: 28px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 800; }
+    nav a { padding: 8px 10px; border-radius: 8px; color: var(--muted); font-weight: 500; }
+    nav a:hover { background: var(--hover); color: var(--text); }
+    nav a[aria-current="page"] { background: var(--brand-soft); color: var(--brand); }
+    nav .spacer { flex: 1; }
+    /* top bar */
+    .shell { display: flex; flex-direction: column; min-width: 0; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    .crumbs { color: var(--muted); }
+    .crumbs b { color: var(--text); font-weight: 600; }
+    .who { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #0ea5e9); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+    .who a { color: var(--muted); font-size: 13px; }
+    /* content */
+    main { padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .lede { color: var(--muted); margin: 0 0 20px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .fields label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .fields input, .fields select { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--text); font: inherit; }
+    .drop { border: 2px dashed var(--line); border-radius: 14px; padding: 28px 16px; text-align: center; transition: border-color .15s, background .15s; }
+    .drop.over { border-color: var(--brand); background: var(--brand-soft); }
+    .drop .icon { width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-size: 22px; }
+    .pick { display: inline-block; padding: 9px 16px; border-radius: 9px; background: var(--brand); color: #fff; font-weight: 600; cursor: pointer; }
+    .pick:hover { filter: brightness(1.08); }
+    #file { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    #file:focus-visible + .pick, input:focus, select:focus, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .or-drop { color: var(--muted); margin: 8px 0 2px; }
+    .limit { color: var(--muted); font-size: 13px; }
+    .chosen { display: none; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; text-align: left; }
+    .chosen.show { display: flex; }
+    .chosen .doc { width: 32px; height: 32px; border-radius: 8px; background: var(--hover); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .chosen .meta { flex: 1; min-width: 0; }
+    .chosen .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chosen .size { color: var(--muted); font-size: 12px; }
+    .bar { height: 6px; border-radius: 3px; background: var(--hover); overflow: hidden; margin-top: 6px; display: none; }
+    .bar.show { display: block; }
+    .bar i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .6s ease; }
+    #status { margin: 14px 0 0; padding: 0; border-radius: 10px; font-weight: 600; }
+    #status:not(:empty) { padding: 10px 12px; }
+    #status:not(:empty)::before { margin-right: 8px; }
+    #status.error { color: var(--err); background: var(--err-soft); }
+    #status.error::before { content: "⚠"; }
+    #status.ok { color: var(--ok); background: var(--ok-soft); }
+    #status.ok::before { content: "✓"; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .btn { padding: 9px 16px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: 600 14px system-ui; cursor: pointer; }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    aside h2 { font-size: 14px; margin: 0 0 12px; }
+    .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .row:first-of-type { border-top: 0; }
+    .row .m { flex: 1; min-width: 0; }
+    .row .t { font-weight: 600; }
+    .row .d { color: var(--muted); font-size: 12px; }
+    .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .chip { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .chip.paid { color: var(--ok); background: var(--ok-soft); }
+    .chip.review { color: var(--warn); background: var(--warn-soft); }
+    .toast { position: fixed; right: 20px; bottom: 20px; padding: 12px 16px; border-radius: 10px; background: var(--text); color: var(--panel); font-weight: 600; transform: translateY(80px); opacity: 0; transition: .25s; }
+    .toast.show { transform: none; opacity: 1; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) {
+      body { grid-template-columns: 1fr; }
+      nav { flex-direction: row; align-items: center; overflow-x: auto; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+      nav .logo { padding: 0 10px 0 0; } nav .spacer, nav .out { display: none; }
+      header { padding: 10px 16px; } main { padding: 16px; } .fields { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <h1>Upload a receipt</h1>
-  <p>Files up to {{MAX_UPLOAD_MB}} MB.</p>
-  <label for="file">Choose a file</label>
-  <input id="file" type="file">
-  <p id="status" role="status"></p>
+  <nav aria-label="Main">
+    <div class="logo"><span class="mark">C</span> Checkout</div>
+    <a href="/" aria-current="page">Expenses</a>
+    <a href="/">Receipts</a>
+    <a href="/">Activity</a>
+    <a href="/">Settings</a>
+    <span class="spacer"></span>
+    <a class="out" href="/logout">Sign out</a>
+  </nav>
+  <div class="shell">
+    <header>
+      <div class="crumbs">Expenses / <b>New expense</b></div>
+      <div class="who"><span>{{USER_NAME}}</span><span class="avatar" aria-hidden="true">{{USER_INITIALS}}</span><a href="/logout">Sign out</a></div>
+    </header>
+    <main>
+      <section>
+        <h1>New expense</h1>
+        <p class="lede">Attach the receipt, check the details, submit. Finance reviews it within a day.</p>
+        <div class="card">
+          <div class="drop" id="drop">
+            <div class="icon" aria-hidden="true">⇪</div>
+            <input id="file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*">
+            <label for="file" class="pick">Choose a file</label>
+            <p class="or-drop">or drop the receipt here</p>
+            <p class="limit">PDF, JPG or PNG. <span>Files up to {{MAX_UPLOAD_MB}} MB.</span></p>
+            <div class="chosen" id="chosen">
+              <span class="doc" id="ext" aria-hidden="true">PDF</span>
+              <div class="meta"><div class="name" id="fname"></div><div class="size" id="fsize"></div><div class="bar" id="bar"><i></i></div></div>
+            </div>
+          </div>
+          <p id="status" role="status"></p>
+          <div class="fields" style="margin: 18px 0 0">
+            <div><label for="merchant">Merchant</label><input id="merchant" value="Blue Bottle Coffee"></div>
+            <div><label for="amount">Amount</label><input id="amount" value="$18.40" inputmode="decimal"></div>
+            <div><label for="date">Date</label><input id="date" type="date" value="2026-10-14"></div>
+            <div><label for="category">Category</label><select id="category"><option>Meals</option><option>Travel</option><option>Software</option><option>Office</option></select></div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button">Save draft</button>
+            <button class="btn primary" type="button" id="submit" disabled>Submit expense</button>
+          </div>
+        </div>
+      </section>
+      <aside class="card" aria-label="Recent expenses">
+        <h2>Recent expenses</h2>
+        <div class="row"><div class="m"><div class="t">Grab · Airport</div><div class="d">Oct 12 · Travel</div></div><span class="amt">$42.10</span><span class="chip paid">Paid</span></div>
+        <div class="row"><div class="m"><div class="t">Figma</div><div class="d">Oct 9 · Software</div></div><span class="amt">$15.00</span><span class="chip paid">Paid</span></div>
+        <div class="row"><div class="m"><div class="t">Team lunch</div><div class="d">Oct 7 · Meals</div></div><span class="amt">$126.75</span><span class="chip review">In review</span></div>
+      </aside>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="alert"></div>
   <script>
     const MAX_MB = {{MAX_UPLOAD_MB}};
-    document.getElementById('file').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      const status = document.getElementById('status');
+    const $ = (id) => document.getElementById(id);
+    const input = $('file'), status = $('status'), drop = $('drop'), bar = $('bar'), submit = $('submit');
+    const size = (b) => (b >= 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
       if (!file) return;
+      $('chosen').classList.add('show');
+      $('fname').textContent = file.name;
+      $('fsize').textContent = size(file.size);
+      $('ext').textContent = (file.name.split('.').pop() || 'file').slice(0, 4).toUpperCase();
+      submit.disabled = true;
       if (file.size > MAX_MB * 1024 * 1024) {
+        bar.classList.remove('show');
         status.className = 'error';
         status.textContent = `File exceeds ${MAX_MB} MB`;
-      } else {
+        return;
+      }
+      // A short, simulated upload: the demo has nowhere to store files.
+      status.className = '';
+      status.textContent = '';
+      bar.classList.add('show');
+      bar.firstElementChild.style.width = '0';
+      requestAnimationFrame(() => requestAnimationFrame(() => (bar.firstElementChild.style.width = '100%')));
+      setTimeout(() => {
         status.className = 'ok';
         status.textContent = 'Upload complete';
-      }
+        submit.disabled = false;
+      }, 650);
+    });
+
+    ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', (e) => {
+      if (!e.dataTransfer.files.length) return;
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event('change'));
+    });
+
+    submit.addEventListener('click', () => {
+      const t = $('toast');
+      t.textContent = 'Expense submitted for review';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
     });
   </script>
 </body>
